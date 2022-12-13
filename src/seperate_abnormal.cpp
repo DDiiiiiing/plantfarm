@@ -1,6 +1,7 @@
 #include <vector>
 #include <cmath>
 #include <string>
+#include <typeinfo>
 #include "CTPL/ctpl.h"
 
 #include <ros/ros.h>
@@ -157,6 +158,11 @@ std::vector<int> depth2plane(int id, cv::Mat depth_image)
 {
   auto cloud = depth2pointcloud(depth_image);
   std::vector<int> plane = ransac(cloud);
+  plane.clear();
+  plane.push_back(1);
+  plane.push_back(2);
+  plane.push_back(3);
+  plane.push_back(4);
   return plane;
 }
 
@@ -168,39 +174,42 @@ int main(int argc, char **argv)
   std::string yolo_topic = "/yolov5/result";
   // publish
   std::string plane_topic = "/planes";
-  std_msgs::Int32MultiArray plane_coeff;
-
+  // ros base
   ros::init(argc, argv, "serperate_abnormal_node");
-  ros::Rate rate(30);
   SeperateAbnormal sep_abn(rgb_topic, depth_topic, yolo_topic, plane_topic);
-  
+  ros::Rate rate(30);
+  std_msgs::Int32MultiArray plane_coeff;
+  // ransac thread
   ctpl::thread_pool p(int(std::thread::hardware_concurrency())); //make worker as much as the number of cpus
   std::vector<cv::Mat> abnormal_depths; //vectors of input depth data. masked depth image.
-  std::vector<std::future<std::vector<int>>> abnormal_planes; //vectors of output plane coefficient.
+  std::vector<std::future<std::vector<int>>> abnormal_plane_functors; //vectors of output plane coefficient.
 
-  
   while(ros::ok())
   {
     abnormal_depths=sep_abn.get_depth();
-    abnormal_planes.clear();
-    for(auto& d_img : abnormal_depths) //calc pointcloud conversion and ransac with pool
+    abnormal_plane_functors.clear();
+    //calc pointcloud conversion and ransac with pool
+    std::future<std::vector<int>> f;
+    for(auto d_img : abnormal_depths) 
     {
-      abnormal_planes.push_back(p.push(std::ref(depth2plane), d_img));
+      // abnormal_planes.push_back(p.push(depth2plane, d_img));
+      f = p.push(depth2plane, d_img);
     }
 
     try
     {
-      plane_coeff.data.clear();  
-      for(auto plane : abnormal_planes) //extract data from pool return
-      {
-        plane_coeff.data = plane.get();
-        
-        sep_abn.plane_pub.publish(plane_coeff);
-      }
+      //extract data from pool return. order is not guaranteed
+      auto plane = f.get();
+      std::cout<<"type of f.get"<<typeid(plane).name()<<std::endl;
+      std::cout<<"f "<<plane.at(0)<<","<<plane.at(1)<<","<<plane.at(2)<<","<<plane.at(3)<<","<<std::endl;
+
+      // plane_coeff.data = plane;
+      
+      // sep_abn.plane_pub.publish(plane_coeff);
     }
     catch (std::exception &e)
     {
-      std::cout<<"caught exception"<<std::endl;
+      ROS_ERROR("caught exception");
     }
 
     ros::spinOnce();
