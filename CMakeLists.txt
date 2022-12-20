@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.2)
 project(plantfarm)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++17 -O3)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -19,10 +19,10 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_ros  
 )
 find_package(Boost REQUIRED COMPONENTS thread)
+find_package(PCL REQUIRED)
 find_package(realsense2 REQUIRED)
-
 if(NOT realsense2_FOUND)
-    message(FATAL_ERROR "\n\n Intel RealSense SDK 2.0 is missing, please install it from https://github.com/IntelRealSense/librealsense/releases\n\n")
+  message(FATAL_ERROR "\n\n Intel RealSense SDK 2.0 is missing, please install it from https://github.com/IntelRealSense/librealsense/releases\n\n")
 endif()
 
 ################################################
@@ -85,6 +85,7 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -95,6 +96,11 @@ include_directories(
 add_executable(seperate_abnormal_node src/seperate_abnormal.cpp)
 target_link_libraries(seperate_abnormal_node ${catkin_LIBRARIES})
 
+add_executable(abnormal_pointcloud_node src/abnormal_pointcloud.cpp)
+target_link_libraries(abnormal_pointcloud_node ${catkin_LIBRARIES} ${Boost_FILESYSTEM_LIBRARIES} ${PCL_LIBRARIES})
+
+add_executable(pcl_example_node src/pcl_example.cpp)
+target_link_libraries(pcl_example_node ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 #############
 ## Install ##
