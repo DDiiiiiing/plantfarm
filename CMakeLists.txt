@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.2)
 project(plantfarm)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++17 -O3)
+add_compile_options(-std=c++17 -O5)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
