@@ -31,7 +31,7 @@
 #include <pcl/common/common_headers.h>
 #include <pcl/common/transforms.h>
 
-// https://github.com/bshoshany/thread-pool
+// https://github.com/bshoshany/thread-pool 
 // generate thread pool with a number of cpus
 BS::thread_pool pool(std::thread::hardware_concurrency());
 
@@ -178,8 +178,8 @@ public:
 
         float x = (u - cx) / fx;
         float y = (v - cy) / fy;
-
-        // Apply distortion
+ 
+        // // Apply distortion
         // float r2 = x * x + y * y;
         // float f = 1 + D.at(0) * r2 + D.at(1) * r2 * r2 + D.at(4) * r2 * r2 * r2;
         // float ux = x * f + 2 * D.at(2) * x * y + D.at(3) * (r2 + 2 * x * x);

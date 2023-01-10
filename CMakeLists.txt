@@ -33,6 +33,7 @@ add_message_files(
   FILES
   YoloResult.msg
   YoloResultList.msg
+  PreprocessedPointcloud.msg 
 )
 
 ## Generate services in the 'srv' folder
@@ -53,6 +54,7 @@ add_message_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
+  sensor_msgs
 )
 
 ################################################
@@ -93,11 +95,11 @@ include_directories(
 #   src/${PROJECT_NAME}/plantfarm.cpp
 # )
 
-add_executable(seperate_abnormal_node src/seperate_abnormal.cpp)
-target_link_libraries(seperate_abnormal_node ${catkin_LIBRARIES})
-
 add_executable(abnormal_pointcloud_node src/abnormal_pointcloud.cpp)
 target_link_libraries(abnormal_pointcloud_node ${catkin_LIBRARIES} ${Boost_FILESYSTEM_LIBRARIES} ${PCL_LIBRARIES})
+
+add_executable(tracking_abnormal_node src/tracking_abnormal.cpp)
+target_link_libraries(tracking_abnormal_node ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 add_executable(pcl_example_node src/pcl_example.cpp)
 target_link_libraries(pcl_example_node ${catkin_LIBRARIES} ${PCL_LIBRARIES})

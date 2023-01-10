@@ -68,6 +68,7 @@ class pcltest
 
   }
 
+
   ~pcltest()
   {
     ROS_INFO("pcltest Node STOP!");
@@ -123,6 +124,7 @@ class pcltest
     extract.filter (*cloud);
 
 
+#include <pcl/filters/passthrough.h>
 
     /*for(int i=0 ; i < cloud->size(); i++)
     {
