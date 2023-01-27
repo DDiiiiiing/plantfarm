@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.2)
 project(plantfarm)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++17 -O5)
+add_compile_options(-std=c++17)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -16,7 +16,8 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   message_generation
   cv_bridge
-  pcl_ros  
+  pcl_ros
+  dsr_msgs
 )
 find_package(Boost REQUIRED COMPONENTS thread)
 find_package(PCL REQUIRED)
@@ -73,7 +74,7 @@ generate_messages(
 catkin_package(
  INCLUDE_DIRS include
 #  LIBRARIES plantfarm
- CATKIN_DEPENDS roscpp rospy tf
+ CATKIN_DEPENDS roscpp rospy tf message_runtime
 #  DEPENDS system_lib
 )
 
@@ -90,19 +91,18 @@ include_directories(
   ${PCL_INCLUDE_DIRS}
 )
 
-## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/plantfarm.cpp
-# )
+add_executable(seperate_abnormal_node src/seperate_abnormal.cpp)
+target_link_libraries(seperate_abnormal_node ${catkin_LIBRARIES} ${Boost_FILESYSTEM_LIBRARIES} ${PCL_LIBRARIES})
 
-add_executable(abnormal_pointcloud_node src/abnormal_pointcloud.cpp)
-target_link_libraries(abnormal_pointcloud_node ${catkin_LIBRARIES} ${Boost_FILESYSTEM_LIBRARIES} ${PCL_LIBRARIES})
+add_executable(register_abnormal_node src/register_abnormal.cpp)
+target_link_libraries(register_abnormal_node ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+add_dependencies(register_abnormal_node ${catkin_EXPORTED_TARGETS})
 
-add_executable(tracking_abnormal_node src/tracking_abnormal.cpp)
-target_link_libraries(tracking_abnormal_node ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+add_executable(pointcloud_study_node src/study.cpp)
+target_link_libraries(pointcloud_study_node ${catkin_LIBRARIES} ${Boost_FILESYSTEM_LIBRARIES} ${PCL_LIBRARIES})
 
-add_executable(pcl_example_node src/pcl_example.cpp)
-target_link_libraries(pcl_example_node ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+# add_executable(pcl_example_node src/trash/pcl_example.cpp)
+# target_link_libraries(pcl_example_node ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 #############
 ## Install ##

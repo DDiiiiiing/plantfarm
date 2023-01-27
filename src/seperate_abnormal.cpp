@@ -28,11 +28,10 @@
 #include <pcl/PCLPointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/filters/passthrough.h>
-#include <pcl/common/common_headers.h>
 #include <pcl/common/transforms.h>
 
 // https://github.com/bshoshany/thread-pool 
-// generate thread pool with a number of cpus
+// generate thread pool according to the number of cpus
 BS::thread_pool pool(std::thread::hardware_concurrency());
 
 class SeperateAbnormal
@@ -43,12 +42,12 @@ public:
     ROS_INFO("wait for realsense");
     while(nh_.hasParam("/camera/realsense2_camera/serial_no")!=1);
     
-    ROS_INFO("abnormal pointcloud node start!!!");
+    ROS_INFO("seperate abnormal node start!!!");
     // subscriber
     depth_sub       = nh_.subscribe(depth_topic, 5, &SeperateAbnormal::rs_callback, this);
     intrinsic_sub   = nh_.subscribe(intrinsic_topic, 1, &SeperateAbnormal::intrinsics_callback, this);    
     yolo_sub        = nh_.subscribe(yolo_topic, 10, &SeperateAbnormal::yolo_callback, this);
-    empty_sub       = nh_.subscribe("/empty", 1, &SeperateAbnormal::empty_callback, this);
+    empty_sub       = nh_.subscribe("/plantfarm/empty", 1, &SeperateAbnormal::empty_callback, this);
     // publisher
     pointcloud_pub  = nh_.advertise<sensor_msgs::PointCloud2>(pointcloud_topic, 5);
     // get image size
@@ -59,14 +58,10 @@ public:
       ROS_ERROR("please check realsense in connected in USB3.0 mode");
       throw "please check realsense in connected in USB3.0 mode";
     }
-    
-    //for test
-    // image_w=1280;
-    // image_h=720;
   }
   ~SeperateAbnormal()
   {
-    ROS_INFO("abnormal pointcloud node end!!!");
+    ROS_INFO("seperate abnormal ode end!!!");
     cv::destroyAllWindows();
   }
 
@@ -93,8 +88,8 @@ public:
   {
     auto yolo_returns = yolo->ret;
     abnormal_contours.clear();
-    if(abnormal_contours.capacity() > 100) abnormal_contours.shrink_to_fit(); // shrink memory
-    
+    if(abnormal_contours.capacity() > 100)
+      abnormal_contours.shrink_to_fit(); // shrink memory
     // std::cout<<"yolo returns size : "<<yolo_returns.size()<<std::endl;
     for(auto yolo_ret : yolo_returns)
     {
@@ -149,16 +144,12 @@ public:
   // convert depth image to pointcloud and publish
   pcl::PointCloud<pcl::PointXYZ> depth_to_pointcloud(cv::Mat depth_image)
   {
-    sensor_msgs::PointCloud2 cloud_msg;
     pcl::PointCloud<pcl::PointXYZ> cloud;
 
     int width = depth_image.cols;
     int height = depth_image.rows;
     cloud.clear();
-    // cloud.width = width;
-    // cloud.height = height;
     cloud.is_dense = false;
-    // cloud.points.resize(cloud.width * cloud.height);
 
     // Get the camera intrinsics
     double fx = K.at(0);
@@ -192,13 +183,11 @@ public:
         point.y = float(depth * y / 1000.0);
         point.z = float(depth / 1000.0);
 
-        // cloud.points[v * width + u] = point;
         cloud.push_back(point); 
         // std::cout<<"u : "<<u<<" | v : "<<v<<" | x : "<<point.x<<" | y : "<<point.y<<" | z : "<<point.z<<""<<std::endl;
       }
     }
 
-    // print_pc(cloud);
     return cloud;
   }
   // publish pointcloud
@@ -239,9 +228,8 @@ private:
   ros::Subscriber intrinsic_sub;    // intrinsic
   ros::Subscriber depth_sub;        // depth image
   ros::Subscriber yolo_sub;         // yolo result
-  ros::Subscriber empty_sub;        // empty topic
+  ros::Subscriber empty_sub;        //image_pipeline pointcloud
   ros::Publisher pointcloud_pub;    // pointcloud
-
   int image_w, image_h;
   boost::array<double, 9> K;        // camera intrinsics
   std::vector<double> D;                 // distortion coefficients
@@ -256,12 +244,12 @@ int main(int argc, char **argv)
   std::string intrinsic_topic   = "/camera/aligned_depth_to_color/camera_info";
   std::string yolo_topic        = "/yolov5/result";
   // publish
-  std::string pc_topic          = "/abnormal_pointcloud";
+  std::string pc_topic          = "/plantfarm/abnormal_pointcloud";
   
   // ros base
-  ros::init(argc, argv, "serperate_abnormal_node");
+  ros::init(argc, argv, "seperate_abnormal_node");
   ros::NodeHandle nh; //main node handler
-  ros::Publisher empty_pub = nh.advertise<std_msgs::Empty>("/empty", 1); //publish empty topic
+  ros::Publisher empty_pub = nh.advertise<std_msgs::Empty>("/plantfarm/empty", 1); //publish empty topic
   SeperateAbnormal sep_abn(depth_topic, intrinsic_topic, yolo_topic, pc_topic);
   ros::Rate rate(30); // rate of empty publisher
 
